@@ -25,17 +25,17 @@ static void usage() {
 	);
 }
 
+char *rootdirectory = "./";
 int main(int argc, char* argv[]){
     int opt = 0;
     int options_index = 0;
-    char *directory = "./";
     int port = 3000;
 
-    while ((opt=getopt_long(argc, argv,"dp:?h",long_options,&options_index)) != EOF) {
+    while ((opt=getopt_long(argc, argv,"d:p:?h",long_options,&options_index)) != EOF) {
         switch (opt) {
             case  0 : break;
             case 'd':
-                directory = optarg;
+                rootdirectory = optarg;
                 break;
             case 'p':
                 port = atoi(optarg);
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
       return 0;
     }
 
-    fprintf(stderr,"directory: %s port:%d\n",directory, port);
+    fprintf(stderr,"directory: %s port:%d\n",rootdirectory, port);
     int listenfd;
     struct sockaddr_in clientaddr;
     memset(&clientaddr, 0, sizeof(struct sockaddr_in));
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]){
     aco_thread_init(NULL);
     aco_t* main_co = aco_create(NULL, NULL, 0, NULL, NULL);
     aco_share_stack_t* sstk = aco_share_stack_new(0);
-    int timeout = 20;
+    int timeout = -1;
     while (1) {
         int n = epoll_wait(epfd, events, MAXEVENTS, timeout);
         for (int i = 0; i < n; i++) {
@@ -103,6 +103,7 @@ int main(int argc, char* argv[]){
 
                     acohttp_req *newreq = (acohttp_req *)malloc(sizeof(acohttp_req));
                     newreq->fd = infd;
+                    newreq->epfd = epfd;
                     newreq->co = aco_create(main_co, sstk, 0, http_handler, newreq);
                     event.data.ptr = newreq;
                     event.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
@@ -120,7 +121,6 @@ int main(int argc, char* argv[]){
 
                 fprintf(stderr,"new data from fd %d\n", r->fd);
                 if (r->co->is_end != 1){
-                  fprintf(stderr,"co not end\n");
                   aco_resume(r->co);
                 } else {
                   fprintf(stderr,"co ended\n");
