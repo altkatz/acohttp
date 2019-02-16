@@ -64,9 +64,11 @@ int co_writen(int fd, char *buf, int count){
 }
 int co_writen_file(int fd, int filefd, int count){
   off_t offset = 0;
+  //TODO co lock
   while(offset < count){
     ssize_t n = sendfile(fd, filefd, &offset, count);
     if (n <= 0){
+      //TODO :testing
       if (-1 == n && EAGAIN == errno){
           acohttp_req* req = aco_get_arg();
           re_add_poll(req->epfd, fd, EPOLLOUT, req);
@@ -76,8 +78,6 @@ int co_writen_file(int fd, int filefd, int count){
         //error
         return n;
       }
-    } else {
-      offset += n;
     }
   }
   return count;
