@@ -39,16 +39,16 @@ void http_handler(){
 
   if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode)) {
     fprintf(stderr,"403%s",filename);
-    co_writen(r->fd,MY_RESP_HEADER_403,sizeof(MY_RESP_HEADER_403));
+    co_writen(r->fd,MY_RESP_HEADER_403,sizeof(MY_RESP_HEADER_403)-1);
     cleanup();
   }
   int srcfd = open(filename, O_RDONLY, 0);
   if(srcfd < 2){
     fprintf(stderr,"404%s",filename);
-    co_writen(r->fd,MY_RESP_HEADER_404,sizeof(MY_RESP_HEADER_404));
+    co_writen(r->fd,MY_RESP_HEADER_404,sizeof(MY_RESP_HEADER_404)-1);
     cleanup();
   }
-  co_writen(r->fd,MY_RESP_HEADER,sizeof(MY_RESP_HEADER));
+  co_writen(r->fd,MY_RESP_HEADER,sizeof(MY_RESP_HEADER)-1);
   co_writen_file(r->fd, srcfd, sbuf.st_size);
   close(srcfd);
   cleanup();
